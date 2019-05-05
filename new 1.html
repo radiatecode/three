@@ -34,7 +34,8 @@
 		</div>
 
 		<script src="three.js"></script>
-		<script src="trackball.js"></script>
+		<!--<script src="trackball.js"></script>-->
+		<script src="orbit.js"></script>
 
 		<script src="webgl.js"></script>
 
@@ -42,7 +43,7 @@
 			if ( WEBGL.isWebGLAvailable() === false ) {
 				document.body.appendChild( WEBGL.getWebGLErrorMessage() );
 			}
-			var camera, scene, renderer;
+			var camera, scene, renderer, cameraControls;
 			var plane, cube;
 			var mouse, raycaster, isShiftDown = false;
 			var rollOverMesh, rollOverMaterial;
@@ -54,8 +55,9 @@
 				camera = new THREE.PerspectiveCamera( 25, window.innerWidth / window.innerHeight, 1, 5000 );
 				camera.position.set( 500, 800, 1300 );
 				
-				controls = new THREE.TrackballControls( camera );
+				//controls = new THREE.TrackballControls( camera );
 				
+			
 				camera.lookAt( 0, 0, 0 );
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0xf0f0f0 );
@@ -87,6 +89,16 @@
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
+				
+				/*rotate tthe camera*/
+				cameraControls = new THREE.OrbitControls( camera, renderer.domElement );
+				cameraControls.target.set( 0, - 10, 0 );
+				cameraControls.maxDistance = 1000;
+				cameraControls.minDistance = 10;
+				cameraControls.addEventListener( 'change', render );
+				cameraControls.update();
+				/*rotate tthe camera*/
+				
 				document.body.appendChild( renderer.domElement );
 				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
@@ -147,7 +159,7 @@
 				}
 			}
 			function render() {
-			    controls.update();
+			    //controls.update();
 				renderer.render( scene, camera );
 			}
 		</script>
