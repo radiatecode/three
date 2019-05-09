@@ -29,7 +29,7 @@
 	<body>
 
 		<div id="info">
-			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - voxel painter - webgl<br>
+			
 			<strong>click</strong>: add voxel, <strong>shift + click</strong>: remove voxel
 		</div>
 
@@ -49,33 +49,59 @@
 			var rollOverMesh, rollOverMaterial;
 			var cubeGeo, cubeMaterial;
 			var objects = [];
+            var prevVoxY = 0;
+            var prevObj = null;
 			init();
 			render();
 			function init() {
-				camera = new THREE.PerspectiveCamera( 25, window.innerWidth / window.innerHeight, 1, 5000 );
+			     /*Camera part (1)*/
+				camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 5000 );
 				camera.position.set( 500, 800, 1300 );
 				
-				//controls = new THREE.TrackballControls( camera );
-				
-			
+				//controls = new THREE.TrackballControls( camera ); /*create rotation with wave*/
 				camera.lookAt( 0, 0, 0 );
+				
+				/*scene part (2)*/
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0xf0f0f0 );
-				// roll-over helpers
+                // roll-over helpers
+
 				var rollOverGeo = new THREE.BoxBufferGeometry( 50, 50, 50 );
-				rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
-				rollOverMesh = new THREE.Mesh( rollOverGeo, rollOverMaterial );
-				scene.add( rollOverMesh );
-				// cubes BoxBufferGeometry(veritcal,up,horizontal)
-				cubeGeo = new THREE.BoxBufferGeometry( 50, 50, 50 );
+                rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
+                rollOverMesh = new THREE.Mesh( rollOverGeo, rollOverMaterial );
+                scene.add( rollOverMesh );
+
+				// cubes BoxBufferGeometry(middle veritcal,height, top horizontal)
+				cubeGeo = new THREE.BoxBufferGeometry( 100, 100, 100 );
 				cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, map: new THREE.TextureLoader().load( 'square-outline-textured.png' ) } );
 				// grid
-				var gridHelper = new THREE.GridHelper( 500, 10 );
-				scene.add( gridHelper );
+                var boundingGrid = new THREE.Object3D();
+				var gridHelperYZ = new THREE.GridHelper( 500, 10,new THREE.Color( 'skyblue' ),new THREE.Color( 'skyblue' ) /*make top up  grid*/ );
+				var gridHelperYX = new THREE.GridHelper( 500, 10,new THREE.Color( 'green' ),new THREE.Color( 'green' ) /*make left up grid*/ );
+				var gridHelperXZ = new THREE.GridHelper( 500, 10 /*make ground grid*/ );
+
+				gridHelperYZ.rotation.x = Math.PI/2;
+                gridHelperYZ.position.z=-250;
+                gridHelperYZ.position.y=250;
+				boundingGrid.add(gridHelperYZ);
+
+                gridHelperYX.rotation.z = Math.PI/2;
+                gridHelperYX.position.y=250;
+                gridHelperYX.position.x=-250;
+                boundingGrid.add(gridHelperYX);
+
+
+                boundingGrid.add(gridHelperXZ);
+                boundingGrid.add(gridHelperYZ);
+                boundingGrid.add(gridHelperYX);
+
+				scene.add( boundingGrid );
+
 				//
 				raycaster = new THREE.Raycaster();
 				mouse = new THREE.Vector2();
-				var geometry = new THREE.PlaneBufferGeometry( 500, 500 /*grid*/ );
+
+				var geometry = new THREE.PlaneBufferGeometry( 500, 500 /*place available to drop on grid*/ );
 				geometry.rotateX( - Math.PI / 2 );
 				plane = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { visible: false } ) );
 				scene.add( plane );
@@ -86,11 +112,13 @@
 				var directionalLight = new THREE.DirectionalLight( 0xffffff );
 				directionalLight.position.set( 1, 0.75, 0.5 ).normalize();
 				scene.add( directionalLight );
+				
+				/*Render part (3)*/
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				
-				/*rotate tthe camera*/
+				/*rotate the camera without waver*/
 				cameraControls = new THREE.OrbitControls( camera, renderer.domElement );
 				cameraControls.target.set( 0, - 10, 0 );
 				cameraControls.maxDistance = 1000;
@@ -141,9 +169,18 @@
 					} else {
 						var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
 						voxel.position.copy( intersect.point ).add( intersect.face.normal );
-						voxel.position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );
-						scene.add( voxel );
-						objects.push( voxel );
+						voxel.position.divideScalar( 100 ).floor().multiplyScalar( 100 ).addScalar( 50 );
+                        //console.log(voxel);
+						if((voxel.position.x<=225 && voxel.position.x>=-225) &&
+							(voxel.position.z<=225 && voxel.position.z>=-225)) {
+                            scene.add(voxel);
+                            objects.push(voxel);
+                            //prevObj = objects[objects.length-1];
+                            //prevVoxY = prevObj.position.y;
+                            console.log(objects);
+                        }else{
+						    console.log('outside the grid');
+						}
 					}
 					render();
 				}
@@ -158,6 +195,8 @@
 					case 16: isShiftDown = false; break;
 				}
 			}
+			
+			/*Render part (3)*/
 			function render() {
 			    //controls.update();
 				renderer.render( scene, camera );
