@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - interactive - voxel painter</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+		<style>
+
+			a {
+				color: #ff0000;
+			}
+			#canvas{
+				width: 200px;
+				height: 200px;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div class="container">
+
+			<h3>Controls</h3>
+			<div class="row">
+				<div class="col-md-6">
+					<strong>click</strong>: add voxel, <strong>shift + click</strong>: remove voxel
+					<form class="form-horizontal">
+						<div class="form-group">
+							<input type="text" class="form-control" placeholder="height" id="height">
+						</div>
+						<div class="form-group">
+							<input type="text" class="form-control" placeholder="width" id="width">
+						</div>
+						<div class="form-group">
+							<input type="button" class="btn btn-info btn-xs" value="Submit" id="submit">
+						</div>
+					</form>
+				</div>
+				<div class="col-md-4 col-md-offset-2">
+					<strong>click</strong>: add voxel, <strong>shift + click</strong>: remove voxel
+					<form class="form-horizontal">
+						<div class="form-group">
+							<input type="text" class="form-control" placeholder="Packet Size" id="packet_size">
+						</div>
+						<div class="form-group">
+							<input type="button" class="btn btn-info btn-xs" value="Submit" id="packet_submit">
+						</div>
+					</form>
+				</div>
+				<div id="container" class="col-md-8">
+                   <div id="canvas"></div>
+				</div>
+
+			</div>
+
+		</div><!-- /.container -->
+
+		<script src="three.js"></script>
+		<!--<script src="trackball.js"></script>-->
+		<script src="orbit.js"></script>
+
+		<script src="webgl.js"></script>
+
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+		<script>
+			if ( WEBGL.isWebGLAvailable() === false ) {
+				document.body.appendChild( WEBGL.getWebGLErrorMessage() );
+			}
+			var camera, scene, renderer, cameraControls, container, stats;
+			var plane, packet_size=50, scaler=25 , box_height=300, box_width=500;
+			var mouse, raycaster, isShiftDown = false;
+			var rollOverMesh, rollOverMaterial;
+			var cubeGeo, cubeMaterial;
+			var objects = [],boundingGrid, boxGeometry3, gridGeometry3, grid3;
+            var prevVoxY = 0, prevObj = null;
+            var rollOverObjectIds = [];
+
+            $(function () {
+                $("#submit").click(function () {
+                    box_width = $("#width").val();
+                    box_height = $("#height").val();
+
+                    if(box_width !== "" && box_height !== "" && packet_size !== ""){
+                        scaler = packet_size/2;
+                        init();
+                        render();
+                    }else{
+                        alert('all field are required')
+                    }
+                });
+                $("#packet_submit").click(function () {
+                    packet_size = $("#packet_size").val();
+                    if(packet_size !== ""){
+                        scaler = packet_size/2;
+                        updateRollerCube();
+                    }else{
+                        alert('all field are required')
+                    }
+
+                });
+            });
+            function clean(){
+                camera = null;scene = null;
+                rollOverMaterial = null;rollOverMesh = null;
+                cubeGeo = null;cubeMaterial = null;
+                boundingGrid = null;
+                boxGeometry3 = null;gridGeometry3 = null;grid3 = null;
+                raycaster = null;mouse = null;
+                objects = [];
+                plane = null;renderer = null;cameraControls = null;
+                stats = null;
+                var myNode = document.getElementById("canvas");
+                while (myNode.firstChild) {
+                    myNode.removeChild(myNode.firstChild);
+                }
+			}
+			function init() {
+                clean();
+			     /*Camera part (1)*/
+				camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 5000 );
+				camera.position.set( 500, 800, 1300 );
+				
+				//controls = new THREE.TrackballControls( camera ); /*create rotation with wave*/
+				camera.lookAt( 0, 0, 0 );
+				
+				/*scene part (2)*/
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xf0f0f0 );
+                // roll-over helpers
+
+				var rollOverGeo = new THREE.BoxBufferGeometry( packet_size, packet_size, packet_size );
+                rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
+                rollOverMesh = new THREE.Mesh( rollOverGeo, rollOverMaterial );
+                scene.add( rollOverMesh );
+                rollOverObjectIds.push(rollOverMesh.id);
+                console.log(rollOverObjectIds);
+
+				// cubes BoxBufferGeometry(middle veritcal,height, top horizontal)
+				cubeGeo = new THREE.BoxBufferGeometry( packet_size, packet_size, packet_size );
+				cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, map: new THREE.TextureLoader().load( 'square-outline-textured.png' ) } );
+				// grid
+                boundingGrid = new THREE.Object3D();
+				var gridHelperYZ = new THREE.GridHelper( 500, 100,new THREE.Color( 'skyblue' ),new THREE.Color( 'skyblue' ) /*make top up  grid*/ );
+				var gridHelperYX = new THREE.GridHelper( 500, 100,new THREE.Color( 'green' ),new THREE.Color( 'green' ) /*make left up grid*/ );
+				var gridHelperXZ = new THREE.GridHelper( 500, 10 /*make ground grid*/ );
+
+				gridHelperYZ.rotation.x = Math.PI/2;
+                gridHelperYZ.position.z=-250;
+                gridHelperYZ.position.y=250;
+				boundingGrid.add(gridHelperYZ);
+
+                gridHelperYX.rotation.z = Math.PI/2;
+                gridHelperYX.position.y=250;
+                gridHelperYX.position.x=-250;
+                boundingGrid.add(gridHelperYX);
+
+
+                boundingGrid.add(gridHelperXZ);
+                boundingGrid.add(gridHelperYZ);
+                boundingGrid.add(gridHelperYX);
+
+				//scene.add( boundingGrid );
+
+                boxGeometry3 = new THREE.BoxBufferGeometry(box_width, box_height, box_width, 100, 5, 4);
+                gridGeometry3 = GridBoxGeometry(boxGeometry3, true);
+                grid3 = new THREE.LineSegments(gridGeometry3, new THREE.LineBasicMaterial({ color: "green"}));
+
+                //grid3.position.z = 3;
+				grid3.position.set( 0, 0, 0 );
+                //grid3.position.y = 0;  // raise or lower the grid !
+
+                scene.add(grid3);
+                console.log(gridGeometry3);
+
+                var floorXZGeo = new THREE.BoxBufferGeometry(box_width,10,box_width);
+                var floorXZMat = new THREE.MeshBasicMaterial({color: 0x656587});
+                var floorXZ = new THREE.Mesh(floorXZGeo,floorXZMat);
+                floorXZ.position.set(0,0,0);
+                scene.add(floorXZ);
+
+				//
+				raycaster = new THREE.Raycaster();
+				mouse = new THREE.Vector3();
+
+				var geometry = new THREE.PlaneBufferGeometry( box_width, box_width /*place available to drop on grid*/ );
+				geometry.rotateX( - Math.PI / 2 );
+				plane = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { visible: false } ) );
+				scene.add( plane );
+				objects.push( plane );
+				// lights
+				var ambientLight = new THREE.AmbientLight( 0x606060 );
+				scene.add( ambientLight );
+				var directionalLight = new THREE.DirectionalLight( 0xffffff );
+				directionalLight.position.set( 1, 0.75, 0.5 ).normalize();
+				scene.add( directionalLight );
+
+				/*container*/
+                container = document.getElementById('canvas');
+                document.body.appendChild( container );
+
+				/*Render part (3)*/
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+                container.appendChild( renderer.domElement );
+
+
+				/*rotate the camera without waver*/
+				cameraControls = new THREE.OrbitControls( camera, renderer.domElement );
+				cameraControls.target.set( 0, - 10, 0 );
+				cameraControls.maxDistance = 1000;
+				cameraControls.minDistance = 10;
+				cameraControls.addEventListener( 'change', render );
+				cameraControls.update();
+				/*rotate the camera*/
+
+                renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
+                renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
+                window.addEventListener( 'keydown', onDocumentKeyDown, false );
+                window.addEventListener( 'keyup', onDocumentKeyUp, false );
+				window.addEventListener( 'resize', onWindowResize, false );
+			}
+			/*remove a object from a scene by id*/
+			function removeObj(id) {
+                scene.remove(scene.getObjectById(id));
+            }
+
+            /*when update roller size or packet size roller over will be update*/
+			function updateRollerCube() {
+                removeObj(rollOverObjectIds[rollOverObjectIds.length-1]);
+                var rollOverGeo = new THREE.BoxBufferGeometry( packet_size, packet_size, packet_size );
+                rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
+                rollOverMesh = new THREE.Mesh( rollOverGeo, rollOverMaterial );
+                scene.add( rollOverMesh );
+                rollOverObjectIds.push(rollOverMesh.id);
+
+                // cubes BoxBufferGeometry(middle veritcal,height, top horizontal)
+                cubeGeo = new THREE.BoxBufferGeometry( packet_size, packet_size, packet_size );
+                cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, map: new THREE.TextureLoader().load( 'square-outline-textured.png' ) } );
+            }
+
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+			function onDocumentMouseMove( event ) {
+				event.preventDefault();
+				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+				raycaster.setFromCamera( mouse, camera );
+				var intersects = raycaster.intersectObjects( objects );
+				if ( intersects.length > 0 ) {
+					var intersect = intersects[ 0 ];
+					rollOverMesh.position.copy( intersect.point ).add( intersect.face.normal );
+					rollOverMesh.position.divideScalar( packet_size ).floor().multiplyScalar( packet_size ).addScalar( scaler );
+				}
+				render();
+			}
+			function onDocumentMouseDown( event ) {
+				event.preventDefault();
+				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+				raycaster.setFromCamera( mouse, camera );
+				var intersects = raycaster.intersectObjects( objects );
+				if ( intersects.length > 0 ) {
+					var intersect = intersects[ 0 ];
+					// delete cube
+					if ( isShiftDown ) {
+						if ( intersect.object !== plane ) {
+							scene.remove( intersect.object );
+							objects.splice( objects.indexOf( intersect.object ), 1 );
+						}
+						// create cube
+					} else {
+						var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
+						voxel.position.copy( intersect.point ).add( intersect.face.normal );
+						voxel.position.divideScalar( packet_size ).floor().multiplyScalar( packet_size ).addScalar( scaler );
+                        //console.log(voxel);
+                        // if((voxel.position.x<=225 && voxel.position.x>=-225) &&
+							// (voxel.position.z<=225 && voxel.position.z>=-225)) {
+                            scene.add(voxel);
+                            objects.push(voxel);
+                            //prevObj = objects[objects.length-1];
+                            //prevVoxY = prevObj.position.y;
+                        // }else{
+						//     console.log('outside the grid');
+						// }
+                        console.log(voxel);
+					}
+					render();
+				}
+			}
+			function onDocumentKeyDown( event ) {
+				switch ( event.keyCode ) {
+					case 16: isShiftDown = true; break;
+				}
+			}
+			function onDocumentKeyUp( event ) {
+				switch ( event.keyCode ) {
+					case 16: isShiftDown = false; break;
+				}
+			}
+			
+			/*Render part (3)*/
+			function render() {
+			    //controls.update();
+                renderer.setRenderTarget(null);
+				renderer.render( scene, camera );
+			}
+            function GridBoxGeometry(geometry, independent) {
+
+                if (!(geometry instanceof THREE.BoxBufferGeometry)) {
+                    console.log("GridBoxGeometry: the parameter 'geometry' has to be of the type THREE.BoxBufferGeometry");
+                    return geometry;
+                }
+                independent = independent !== undefined ? independent : false;
+
+                let newGeometry = new THREE.BoxBufferGeometry();
+                let position = geometry.attributes.position;
+                newGeometry.attributes.position = independent === false ? position : position.clone();
+
+                let segmentsX = geometry.parameters.widthSegments || 1;
+                let segmentsY = geometry.parameters.heightSegments || 1;
+                let segmentsZ = geometry.parameters.depthSegments || 1;
+
+                let startIndex = 0;
+                let indexSide1 = indexSide(segmentsZ, segmentsY, startIndex);
+                startIndex += (segmentsZ + 1) * (segmentsY + 1);
+                let indexSide2 = indexSide(segmentsZ, segmentsY, startIndex);
+                startIndex += (segmentsZ + 1) * (segmentsY + 1);
+                let indexSide3 = indexSide(segmentsX, segmentsZ, startIndex);
+                startIndex += (segmentsX + 1) * (segmentsZ + 1);
+                let indexSide4 = indexSide(segmentsX, segmentsZ, startIndex);
+                startIndex += (segmentsX + 1) * (segmentsZ + 1);
+                let indexSide5 = indexSide(segmentsX, segmentsY, startIndex);
+                startIndex += (segmentsX + 1) * (segmentsY + 1);
+                let indexSide6 = indexSide(segmentsX, segmentsY, startIndex);
+
+                let fullIndices = [];
+                fullIndices = fullIndices.concat(indexSide1);
+                fullIndices = fullIndices.concat(indexSide2);
+                //fullIndices = fullIndices.concat(indexSide3); //top grid
+                fullIndices = fullIndices.concat(indexSide4);
+                fullIndices = fullIndices.concat(indexSide5);
+                fullIndices = fullIndices.concat(indexSide6);
+
+                newGeometry.setIndex(fullIndices);
+
+                function indexSide(x, y, shift) {
+                    let indices = [];
+                    for (let i = 0; i < y + 1; i++) {
+                        let index11 = 0;
+                        let index12 = 0;
+                        for (let j = 0; j < x; j++) {
+                            index11 = (x + 1) * i + j;
+                            index12 = index11 + 1;
+                            let index21 = index11;
+                            let index22 = index11 + (x + 1);
+                            indices.push(shift + index11, shift + index12);
+                            if (index22 < ((x + 1) * (y + 1) - 1)) {
+                                indices.push(shift + index21, shift + index22);
+                            }
+                        }
+                        if ((index12 + x + 1) <= ((x + 1) * (y + 1) - 1)) {
+                            indices.push(shift + index12, shift + index12 + x + 1);
+                        }
+                    }
+                    return indices;
+                }
+                return newGeometry;
+            };
+		</script>
+
+	</body>
+</html>
