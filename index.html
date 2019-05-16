@@ -7,7 +7,6 @@
 		<!-- Latest compiled and minified CSS -->
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 		<style>
-
 			a {
 				color: #ff0000;
 			}
@@ -20,40 +19,40 @@
 	<body>
 
 		<div class="container">
-
-			<h3>Controls</h3>
+			<!--<h3>Controls</h3>-->
 			<div class="row">
-				<div class="col-md-6">
-					<strong>click</strong>: add voxel, <strong>shift + click</strong>: remove voxel
-					<form class="form-horizontal">
-						<div class="form-group">
-							<input type="text" class="form-control" placeholder="height" id="height">
-						</div>
-						<div class="form-group">
-							<input type="text" class="form-control" placeholder="width" id="width">
-						</div>
-						<div class="form-group">
-							<input type="button" class="btn btn-info btn-xs" value="Submit" id="submit">
-						</div>
-					</form>
-				</div>
-				<div class="col-md-4 col-md-offset-2">
-					<strong>click</strong>: add voxel, <strong>shift + click</strong>: remove voxel
-					<form class="form-horizontal">
-						<div class="form-group">
-							<input type="text" class="form-control" placeholder="Packet Size" id="packet_size">
-						</div>
-						<div class="form-group">
-							<input type="button" class="btn btn-info btn-xs" value="Submit" id="packet_submit">
-						</div>
-					</form>
-				</div>
-				<div id="container" class="col-md-8">
+				<!--<div class="col-md-6">-->
+					<!--<strong>click</strong>: add voxel, <strong>shift + click</strong>: remove voxel-->
+					<!--<form class="form-horizontal">-->
+						<!--<div class="form-group">-->
+							<!--<input type="text" class="form-control" placeholder="height" id="height">-->
+						<!--</div>-->
+						<!--<div class="form-group">-->
+							<!--<input type="text" class="form-control" placeholder="width" id="width">-->
+						<!--</div>-->
+						<!--<div class="form-group">-->
+							<!--<input type="button" class="btn btn-info btn-xs" value="Submit" id="submit">-->
+						<!--</div>-->
+					<!--</form>-->
+				<!--</div>-->
+				<!--<div class="col-md-4 col-md-offset-2">-->
+					<!--<strong>click</strong>: add voxel, <strong>shift + click</strong>: remove voxel-->
+					<!--<form class="form-horizontal">-->
+						<!--<div class="form-group">-->
+							<!--<input type="text" class="form-control" placeholder="Packet Size" id="packet_size">-->
+						<!--</div>-->
+						<!--<div class="form-group">-->
+							<!--<input type="text" class="form-control" placeholder="Move X Axios" id="move_x">-->
+						<!--</div>-->
+						<!--<div class="form-group">-->
+							<!--<input type="button" class="btn btn-info btn-xs" value="Submit" id="packet_submit">-->
+						<!--</div>-->
+					<!--</form>-->
+				<!--</div>-->
+				<div id="container" class="col-md-12">
                    <div id="canvas"></div>
 				</div>
-
 			</div>
-
 		</div><!-- /.container -->
 
 		<script src="three.js"></script>
@@ -62,44 +61,51 @@
 
 		<script src="webgl.js"></script>
 
+		<script src="gui.min.js"></script>
+
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+		<script src="jquery-gui.js"></script>
+
 		<script>
 			if ( WEBGL.isWebGLAvailable() === false ) {
 				document.body.appendChild( WEBGL.getWebGLErrorMessage() );
 			}
 			var camera, scene, renderer, cameraControls, container, stats;
-			var plane, packet_size=50, scaler=25 , box_height=300, box_width=500;
+			var plane, packet_height=50, packet_width=50, scaler=25 ,
+				box_height=300, box_width=500;
 			var mouse, raycaster, isShiftDown = false;
 			var rollOverMesh, rollOverMaterial;
 			var cubeGeo, cubeMaterial;
-			var objects = [],boundingGrid, boxGeometry3, gridGeometry3, grid3;
+			var boundingGrid, boxGeometry3, gridGeometry3, grid3;
             var prevVoxY = 0, prevObj = null;
-            var rollOverObjectIds = [];
-
-            $(function () {
-                $("#submit").click(function () {
-                    box_width = $("#width").val();
-                    box_height = $("#height").val();
-
-                    if(box_width !== "" && box_height !== "" && packet_size !== ""){
-                        scaler = packet_size/2;
-                        init();
-                        render();
-                    }else{
-                        alert('all field are required')
-                    }
-                });
-                $("#packet_submit").click(function () {
-                    packet_size = $("#packet_size").val();
-                    if(packet_size !== ""){
-                        scaler = packet_size/2;
-                        updateRollerCube();
-                    }else{
-                        alert('all field are required')
-                    }
-
-                });
-            });
+            var rollOverObjectIds = [],scalerObjects = [],objects = [],collidableMeshList=[];
+            var currentVoxel=null;
+            dynamicGUI();
+            // $(function () {
+            //     $("#submit").click(function () {
+            //         box_width = $("#width").val();
+            //         box_height = $("#height").val();
+            //
+            //         if(box_width !== "" && box_height !== ""){
+            //             scaler = packet_height/2;
+            //             init();
+            //             render();
+            //         }else{
+            //             alert('all field are required')
+            //         }
+            //     });
+            //     $("#packet_submit").click(function () {
+            //         packet_height = $("#packet_size").val();
+            //         if(packet_height !== ""){
+            //             scaler = packet_height/2;
+            //             updateRollerCube();
+            //         }else{
+            //             alert('all field are required')
+            //         }
+            //
+            //     });
+            //
+            // });
             function clean(){
                 camera = null;scene = null;
                 rollOverMaterial = null;rollOverMesh = null;
@@ -129,16 +135,17 @@
 				scene.background = new THREE.Color( 0xf0f0f0 );
                 // roll-over helpers
 
-				var rollOverGeo = new THREE.BoxBufferGeometry( packet_size, packet_size, packet_size );
+				var rollOverGeo = new THREE.CubeGeometry( packet_width, packet_height, packet_height );
                 rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
                 rollOverMesh = new THREE.Mesh( rollOverGeo, rollOverMaterial );
                 scene.add( rollOverMesh );
                 rollOverObjectIds.push(rollOverMesh.id);
-                console.log(rollOverObjectIds);
+
 
 				// cubes BoxBufferGeometry(middle veritcal,height, top horizontal)
-				cubeGeo = new THREE.BoxBufferGeometry( packet_size, packet_size, packet_size );
-				cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, map: new THREE.TextureLoader().load( 'square-outline-textured.png' ) } );
+				cubeGeo = new THREE.CubeGeometry( packet_width, packet_height, packet_height );
+				cubeMaterial = new THREE.MeshBasicMaterial( { color: 0xfeb74c, map: new THREE.TextureLoader().load( 'square-outline-textured.png' ) } );
+                scalerObjects.push(scaler);
 				// grid
                 boundingGrid = new THREE.Object3D();
 				var gridHelperYZ = new THREE.GridHelper( 500, 100,new THREE.Color( 'skyblue' ),new THREE.Color( 'skyblue' ) /*make top up  grid*/ );
@@ -171,9 +178,9 @@
                 //grid3.position.y = 0;  // raise or lower the grid !
 
                 scene.add(grid3);
-                console.log(gridGeometry3);
 
-                var floorXZGeo = new THREE.BoxBufferGeometry(box_width,10,box_width);
+
+                var floorXZGeo = new THREE.BoxBufferGeometry(box_width,2,box_width);
                 var floorXZMat = new THREE.MeshBasicMaterial({color: 0x656587});
                 var floorXZ = new THREE.Mesh(floorXZGeo,floorXZMat);
                 floorXZ.position.set(0,0,0);
@@ -212,9 +219,10 @@
 				cameraControls.target.set( 0, - 10, 0 );
 				cameraControls.maxDistance = 1000;
 				cameraControls.minDistance = 10;
-				cameraControls.addEventListener( 'change', render );
-				cameraControls.update();
+				//cameraControls.addEventListener( 'change', render );
+                //cameraControls.update();
 				/*rotate the camera*/
+
 
                 renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
                 renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
@@ -222,6 +230,144 @@
                 window.addEventListener( 'keyup', onDocumentKeyUp, false );
 				window.addEventListener( 'resize', onWindowResize, false );
 			}
+            /*Custom Dynamic Gui*/
+			function dynamicGUI() {
+                // var axes = new THREE.AxesHelper();
+                // scene.add(axes);
+
+                gui = new dat.GUI();
+
+                parameters =
+                    {
+                        x: 0, y: 30, z: 0,
+                        color: "#ff0000", // color (change "#" to "0x")
+                        opacity: 1,
+                        visible: true,
+                        material: "Phong",
+                        ContainerHeight:0,
+                        ContainerWidth:0,
+                        PacketHeight:0,
+                        PacketWidth:0,
+                        submit: function() {
+                            if(box_width !== 0 && box_height !== 0){
+                                init();
+                                animate();
+                                //render();
+                            }else{
+                                console.log('container height and width must be filled')
+                            }
+                        },
+                        packet_submit:function () {
+                            if(packet_width !== 0 && packet_height !== 0){
+                                scaler = packet_height/2;
+                                updateRollerCube();
+                            }else{
+                                console.log('packet height and width must be filled')
+                            }
+                        }
+                    };
+
+                var folder1 = gui.addFolder('Position');
+                var cubeX = folder1.add( parameters, 'x' ).min(-200).max(200).step(1).listen();
+                var cubeY = folder1.add( parameters, 'y' ).min(0).max(100).step(1).listen();
+                var cubeZ = folder1.add( parameters, 'z' ).min(-200).max(200).step(1).listen();
+                folder1.open();
+                var XValueIncrement =0,XSideCollision="",
+					YValueIncrement =0,YSideCollision="",
+					ZValueIncrement =0,ZSideCollision="";
+                cubeX.onChange(function(value) {
+                    /*Collision detect function */
+                    if (detectCollision()){
+                        XSideCollision = value<0?'neg':'pos';
+                        if (XValueIncrement<value && XSideCollision==='neg') {
+                            XValueIncrement = value;
+                        }else if (XValueIncrement>value && XSideCollision==='pos') {
+                            XValueIncrement = value;
+						}
+                    }else{
+                        XValueIncrement = value;
+					}
+                    /*Collision Detect Function*/
+                    currentVoxel.position.x = XValueIncrement;
+                });
+                cubeY.onChange(function(value) {
+                    /*Collision detect function */
+                    if (detectCollision()){
+                        YSideCollision = value<0?'neg':'pos';
+                        if (YValueIncrement<value && YSideCollision==='neg') {
+                            YValueIncrement = value;
+                        }else if (YValueIncrement>value && YSideCollision==='pos') {
+                            YValueIncrement = value;
+                        }
+                    }else{
+                        YValueIncrement = value;
+                    }
+                    /*Collision Detect Function*/
+                    currentVoxel.position.y = YValueIncrement;
+                });
+                cubeZ.onChange(function(value) {
+                    /*Collision detect function */
+                    if (detectCollision()){
+                        ZSideCollision = value<0?'neg':'pos';
+                        if (ZValueIncrement<value && ZSideCollision==='neg') {
+                            ZValueIncrement = value;
+                        }else if (ZValueIncrement>value && ZSideCollision==='pos') {
+                            ZValueIncrement = value;
+                        }
+                    }else{
+                        ZValueIncrement = value;
+                    }
+                    /*Collision Detect Function*/
+                    currentVoxel.position.z = ZValueIncrement;
+                });
+
+                var folder2 = gui.addFolder('Container');
+                var height = folder2.add(parameters, 'ContainerHeight').min(0).step(1).name('Container Height');
+                var width = folder2.add(parameters, 'PacketWidth').min(0).step(1).name('Container Width');
+                folder2.add( parameters, 'submit' ).name("Submit");
+                folder2.open();
+                height.onChange(function (value) {
+                    box_height = value
+                });
+                width.onChange(function (value) {
+                    box_width = value
+                });
+
+                var folder3 = gui.addFolder('Packet');
+                var packetHeight = folder3.add(parameters, 'PacketHeight').min(0).step(1).name('Container Height');
+                var packetWidth = folder3.add(parameters, 'ContainerWidth').min(0).step(1).name('Container Width');
+                folder3.add( parameters, 'packet_submit' ).name("Change Packet");
+                folder3.open();
+                packetHeight.onChange(function (value) {
+                    packet_height = value
+                });
+                packetWidth.onChange(function (value) {
+                    packet_width = value
+                });
+
+                gui.open();
+            }
+            /*Detect Collision*/
+			function detectCollision() {
+                var originPoint = currentVoxel.position.clone();
+
+                for (var vertexIndex = 0; vertexIndex < currentVoxel.geometry.vertices.length; vertexIndex++)
+                {
+                    var localVertex = currentVoxel.geometry.vertices[vertexIndex].clone();
+                    var globalVertex = localVertex.applyMatrix4( currentVoxel.matrix );
+                    var directionVector = globalVertex.sub( currentVoxel.position );
+
+                    var ray = new THREE.Raycaster( originPoint, directionVector.clone().normalize() );
+                    var collisionResults = ray.intersectObjects( collidableMeshList,true );
+                    if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ){
+                        return true;
+                    }
+
+                }
+                return false;
+            }
+
+
 			/*remove a object from a scene by id*/
 			function removeObj(id) {
                 scene.remove(scene.getObjectById(id));
@@ -230,14 +376,15 @@
             /*when update roller size or packet size roller over will be update*/
 			function updateRollerCube() {
                 removeObj(rollOverObjectIds[rollOverObjectIds.length-1]);
-                var rollOverGeo = new THREE.BoxBufferGeometry( packet_size, packet_size, packet_size );
+                var rollOverGeo = new THREE.BoxBufferGeometry( packet_width, packet_height, packet_height );
                 rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
                 rollOverMesh = new THREE.Mesh( rollOverGeo, rollOverMaterial );
                 scene.add( rollOverMesh );
                 rollOverObjectIds.push(rollOverMesh.id);
+                scalerObjects.push(scaler);
 
                 // cubes BoxBufferGeometry(middle veritcal,height, top horizontal)
-                cubeGeo = new THREE.BoxBufferGeometry( packet_size, packet_size, packet_size );
+                cubeGeo = new THREE.BoxBufferGeometry( packet_width, packet_height, packet_height );
                 cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, map: new THREE.TextureLoader().load( 'square-outline-textured.png' ) } );
             }
 
@@ -254,7 +401,7 @@
 				if ( intersects.length > 0 ) {
 					var intersect = intersects[ 0 ];
 					rollOverMesh.position.copy( intersect.point ).add( intersect.face.normal );
-					rollOverMesh.position.divideScalar( packet_size ).floor().multiplyScalar( packet_size ).addScalar( scaler );
+					rollOverMesh.position.divideScalar( packet_height ).floor().multiplyScalar( packet_height ).addScalar( scaler );
 				}
 				render();
 			}
@@ -270,26 +417,49 @@
 						if ( intersect.object !== plane ) {
 							scene.remove( intersect.object );
 							objects.splice( objects.indexOf( intersect.object ), 1 );
+							console.log(intersect.object);
 						}
 						// create cube
 					} else {
+
+                        var itemsWithoutCurrent = objects.filter(function(x) {
+                            return x !== plane;
+                        });
+                        collidableMeshList = itemsWithoutCurrent.slice();
+                        //console.log(collidableMeshList);
+
 						var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
-						voxel.position.copy( intersect.point ).add( intersect.face.normal );
-						voxel.position.divideScalar( packet_size ).floor().multiplyScalar( packet_size ).addScalar( scaler );
-                        //console.log(voxel);
-                        // if((voxel.position.x<=225 && voxel.position.x>=-225) &&
+						var points = new THREE.Vector3();
+                        points.set(intersect.point.x,intersect.point.y+scaler,intersect.point.z);
+                        voxel.position.copy( points ).add( intersect.face.normal );
+						voxel.position.divideScalar( packet_height ).floor().multiplyScalar( packet_height ).addScalar( scaler );
+						// if((voxel.position.x<=225 && voxel.position.x>=-225) &&
 							// (voxel.position.z<=225 && voxel.position.z>=-225)) {
-                            scene.add(voxel);
-                            objects.push(voxel);
+						// if (scalerObjects.length > 1) {
+                         //    var currentScaler = scalerObjects[scalerObjects.length-1];
+                         //    var prevScaler = scalerObjects[scalerObjects.length-2];
+                         //    if (currentScaler>prevScaler &&
+						// 		intersect.object.position.y!==scaler &&
+                         //        intersect.object.position.y>0){
+                         //        voxel.position.y =  voxel.position.y+scaler;
+						// 	}
+						// }
+						scene.add(voxel);
+						objects.push(voxel);
                             //prevObj = objects[objects.length-1];
                             //prevVoxY = prevObj.position.y;
                         // }else{
 						//     console.log('outside the grid');
 						// }
-                        console.log(voxel);
+                        currentVoxel= voxel;
+                        //console.log(intersects);
+                        //console.log(points);
+                        //console.log(currentVoxel);
+
 					}
 					render();
 				}
+
 			}
 			function onDocumentKeyDown( event ) {
 				switch ( event.keyCode ) {
@@ -301,13 +471,22 @@
 					case 16: isShiftDown = false; break;
 				}
 			}
-			
+
+
+            function animate()
+            {
+                requestAnimationFrame( animate );
+                render();
+                cameraControls.update();
+            }
 			/*Render part (3)*/
 			function render() {
 			    //controls.update();
                 renderer.setRenderTarget(null);
 				renderer.render( scene, camera );
 			}
+
+			/*Create Grid*/
             function GridBoxGeometry(geometry, independent) {
 
                 if (!(geometry instanceof THREE.BoxBufferGeometry)) {
