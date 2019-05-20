@@ -79,7 +79,7 @@
 			var boundingGrid, boxGeometry3, gridGeometry3, grid3;
             var prevVoxY = 0, prevObj = null;
             var rollOverObjectIds = [],scalerObjects = [],objects = [],collidableMeshList=[];
-            var currentVoxel=null;
+            var currentVoxel=null,currentVoxelPosition = new THREE.Vector3();
             dynamicGUI();
             // $(function () {
             //     $("#submit").click(function () {
@@ -190,7 +190,7 @@
 				raycaster = new THREE.Raycaster();
 				mouse = new THREE.Vector3();
 
-				var geometry = new THREE.PlaneBufferGeometry( box_width, box_width /*place available to drop on grid*/ );
+				var geometry = new THREE.BoxBufferGeometry( box_width, box_width /*place available to drop on grid*/ );
 				geometry.rotateX( - Math.PI / 2 );
 				plane = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { visible: false } ) );
 				scene.add( plane );
@@ -236,10 +236,10 @@
                 // scene.add(axes);
 
                 gui = new dat.GUI();
-
                 parameters =
                     {
                         x: 0, y: 30, z: 0,
+						posAxis:400,negAxis:-400,
                         color: "#ff0000", // color (change "#" to "0x")
                         opacity: 1,
                         visible: true,
@@ -264,34 +264,33 @@
                             }else{
                                 console.log('packet height and width must be filled')
                             }
+                        },
+                        resetPosition:function () {
+                           currentVoxel.position.x = currentVoxelPosition.x;
+                           currentVoxel.position.y = currentVoxelPosition.y;
+                           currentVoxel.position.z = currentVoxelPosition.z;
                         }
                     };
 
                 var folder1 = gui.addFolder('Position');
-                var cubeX = folder1.add( parameters, 'x' ).min(-200).max(200).step(1).listen();
+                var cubeX = folder1.add( parameters, 'x' ).min(parameters.negAxis).max(parameters.posAxis).step(1).listen();
                 var cubeY = folder1.add( parameters, 'y' ).min(0).max(100).step(1).listen();
-                var cubeZ = folder1.add( parameters, 'z' ).min(-200).max(200).step(1).listen();
+                var cubeZ = folder1.add( parameters, 'z' ).min(parameters.negAxis).max(parameters.posAxis).step(1).listen();
+                folder1.add( parameters, 'resetPosition' ).name("Reset Position");
                 folder1.open();
                 var XValueIncrement =0,XSideCollision="",
 					YValueIncrement =0,YSideCollision="",
 					ZValueIncrement =0,ZSideCollision="";
                 cubeX.onChange(function(value) {
                     /*Collision detect function */
-                    if (detectCollision()){
-                        XSideCollision = value<0?'neg':'pos';
-                        if (XValueIncrement<value && XSideCollision==='neg') {
-                            XValueIncrement = value;
-                        }else if (XValueIncrement>value && XSideCollision==='pos') {
-                            XValueIncrement = value;
-						}
-                    }else{
-                        XValueIncrement = value;
+                    if (!detectCollision(currentVoxel) && !XAxisGridOutSide(value)){
+                        currentVoxel.position.x = value;
 					}
                     /*Collision Detect Function*/
-                    currentVoxel.position.x = XValueIncrement;
+
                 });
                 cubeY.onChange(function(value) {
-                    /*Collision detect function */
+                    /*Collision detect function
                     if (detectCollision()){
                         YSideCollision = value<0?'neg':'pos';
                         if (YValueIncrement<value && YSideCollision==='neg') {
@@ -302,23 +301,16 @@
                     }else{
                         YValueIncrement = value;
                     }
-                    /*Collision Detect Function*/
-                    currentVoxel.position.y = YValueIncrement;
+                    //Collision Detect Function
+                    currentVoxel.position.y = YValueIncrement; */
+                    if (!detectCollision(currentVoxel)){
+                        currentVoxel.position.y = value;
+                    }
                 });
                 cubeZ.onChange(function(value) {
-                    /*Collision detect function */
-                    if (detectCollision()){
-                        ZSideCollision = value<0?'neg':'pos';
-                        if (ZValueIncrement<value && ZSideCollision==='neg') {
-                            ZValueIncrement = value;
-                        }else if (ZValueIncrement>value && ZSideCollision==='pos') {
-                            ZValueIncrement = value;
-                        }
-                    }else{
-                        ZValueIncrement = value;
+                    if (!detectCollision(currentVoxel) && !ZAxisGridOutSide(value)){
+                        currentVoxel.position.z = value;
                     }
-                    /*Collision Detect Function*/
-                    currentVoxel.position.z = ZValueIncrement;
                 });
 
                 var folder2 = gui.addFolder('Container');
@@ -334,35 +326,74 @@
                 });
 
                 var folder3 = gui.addFolder('Packet');
-                var packetHeight = folder3.add(parameters, 'PacketHeight').min(0).step(1).name('Container Height');
-                var packetWidth = folder3.add(parameters, 'ContainerWidth').min(0).step(1).name('Container Width');
+                var packetHeight = folder3.add(parameters, 'PacketHeight').min(0).step(1).name('Packet Height');
+                var packetWidth = folder3.add(parameters, 'ContainerWidth').min(0).step(1).name('Packet Width');
                 folder3.add( parameters, 'packet_submit' ).name("Change Packet");
                 folder3.open();
                 packetHeight.onChange(function (value) {
-                    packet_height = value
+                    packet_height = value;
                 });
                 packetWidth.onChange(function (value) {
-                    packet_width = value
+                    packet_width = value;
                 });
+
+
+                var update = function() {
+
+                    requestAnimationFrame(update);
+
+                    parameters.x = currentVoxel?currentVoxel.position.x:0;
+                    parameters.y = currentVoxel?currentVoxel.position.y:0;
+                    parameters.z = currentVoxel?currentVoxel.position.z:0;
+                    //console.log(parameters.negAxis);
+
+                    // Iterate over all controllers
+                    for (var i in gui.__controllers) {
+                        gui.__controllers[i].updateDisplay();
+                    }
+
+                };
+
+                update();
 
                 gui.open();
             }
             /*Detect Collision*/
-			function detectCollision() {
-                var originPoint = currentVoxel.position.clone();
-
-                for (var vertexIndex = 0; vertexIndex < currentVoxel.geometry.vertices.length; vertexIndex++)
+			function detectCollision(voxel) {
+                var originPoint = voxel.position.clone();
+                for (var vertexIndex = 0; vertexIndex < voxel.geometry.vertices.length; vertexIndex++)
                 {
-                    var localVertex = currentVoxel.geometry.vertices[vertexIndex].clone();
-                    var globalVertex = localVertex.applyMatrix4( currentVoxel.matrix );
-                    var directionVector = globalVertex.sub( currentVoxel.position );
+                    var localVertex = voxel.geometry.vertices[vertexIndex].clone();
+                    var globalVertex = localVertex.applyMatrix4( voxel.matrix );
+                    var directionVector = globalVertex.sub( voxel.position );
 
                     var ray = new THREE.Raycaster( originPoint, directionVector.clone().normalize() );
                     var collisionResults = ray.intersectObjects( collidableMeshList,true );
                     if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ){
                         return true;
                     }
+                }
+                return false;
+            }
 
+            function XAxisGridOutSide(axisValue) {
+               var axis = (box_width-packet_width)/2;
+               if (axisValue > 0 && axisValue > axis) {
+                   return true;
+			   }
+			   if (axisValue < 0 && axisValue < -axis) {
+                    return true;
+               }
+			   return false;
+            }
+
+            function ZAxisGridOutSide(axisValue) {
+                var axis = (box_width-packet_height)/2;
+                if (axisValue > 0 && axisValue > axis) {
+                    return true;
+                }
+                if (axisValue < 0 && axisValue < -axis) {
+                    return true;
                 }
                 return false;
             }
@@ -376,7 +407,7 @@
             /*when update roller size or packet size roller over will be update*/
 			function updateRollerCube() {
                 removeObj(rollOverObjectIds[rollOverObjectIds.length-1]);
-                var rollOverGeo = new THREE.BoxBufferGeometry( packet_width, packet_height, packet_height );
+                var rollOverGeo = new THREE.CubeGeometry( packet_width, packet_height, packet_height );
                 rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
                 rollOverMesh = new THREE.Mesh( rollOverGeo, rollOverMaterial );
                 scene.add( rollOverMesh );
@@ -384,8 +415,8 @@
                 scalerObjects.push(scaler);
 
                 // cubes BoxBufferGeometry(middle veritcal,height, top horizontal)
-                cubeGeo = new THREE.BoxBufferGeometry( packet_width, packet_height, packet_height );
-                cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, map: new THREE.TextureLoader().load( 'square-outline-textured.png' ) } );
+                cubeGeo = new THREE.CubeGeometry( packet_width, packet_height, packet_height );
+                cubeMaterial = new THREE.MeshBasicMaterial( { color: 0xfeb74c, map: new THREE.TextureLoader().load( 'square-outline-textured.png' ) } );
             }
 
 			function onWindowResize() {
@@ -401,7 +432,7 @@
 				if ( intersects.length > 0 ) {
 					var intersect = intersects[ 0 ];
 					rollOverMesh.position.copy( intersect.point ).add( intersect.face.normal );
-					rollOverMesh.position.divideScalar( packet_height ).floor().multiplyScalar( packet_height ).addScalar( scaler );
+					rollOverMesh.position.divideScalar( packet_height ).floor().multiplyScalar( packet_height ).addScalar( packet_height/2 );
 				}
 				render();
 			}
@@ -412,27 +443,24 @@
 				var intersects = raycaster.intersectObjects( objects );
 				if ( intersects.length > 0 ) {
 					var intersect = intersects[ 0 ];
-					// delete cube
+					//delete cube
 					if ( isShiftDown ) {
 						if ( intersect.object !== plane ) {
 							scene.remove( intersect.object );
 							objects.splice( objects.indexOf( intersect.object ), 1 );
-							console.log(intersect.object);
 						}
-						// create cube
+						//create cube
 					} else {
-
-                        var itemsWithoutCurrent = objects.filter(function(x) {
+                        var itemsWithoutPlane = objects.filter(function(x) {
                             return x !== plane;
                         });
-                        collidableMeshList = itemsWithoutCurrent.slice();
-                        //console.log(collidableMeshList);
+                        collidableMeshList = itemsWithoutPlane.slice();
 
 						var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
 						var points = new THREE.Vector3();
                         points.set(intersect.point.x,intersect.point.y+scaler,intersect.point.z);
                         voxel.position.copy( points ).add( intersect.face.normal );
-						voxel.position.divideScalar( packet_height ).floor().multiplyScalar( packet_height ).addScalar( scaler );
+						voxel.position.divideScalar( packet_height ).floor().multiplyScalar( packet_height ).addScalar( packet_height/2 );
 						// if((voxel.position.x<=225 && voxel.position.x>=-225) &&
 							// (voxel.position.z<=225 && voxel.position.z>=-225)) {
 						// if (scalerObjects.length > 1) {
@@ -446,20 +474,22 @@
 						// }
 						scene.add(voxel);
 						objects.push(voxel);
+						currentVoxel = voxel;
+						currentVoxelPosition.set(
+							currentVoxel.position.x,
+							currentVoxel.position.y,
+							currentVoxel.position.z
+						);
                             //prevObj = objects[objects.length-1];
                             //prevVoxY = prevObj.position.y;
                         // }else{
 						//     console.log('outside the grid');
 						// }
-                        currentVoxel= voxel;
                         //console.log(intersects);
-                        //console.log(points);
-                        //console.log(currentVoxel);
-
-					}
+                        console.log(currentVoxelPosition);
+                    }
 					render();
 				}
-
 			}
 			function onDocumentKeyDown( event ) {
 				switch ( event.keyCode ) {
