@@ -213,7 +213,6 @@
 				renderer.setSize( window.innerWidth, window.innerHeight );
                 container.appendChild( renderer.domElement );
 
-
 				/*rotate the camera without waver*/
 				cameraControls = new THREE.OrbitControls( camera, renderer.domElement );
 				cameraControls.target.set( 0, - 10, 0 );
@@ -274,7 +273,7 @@
 
                 var folder1 = gui.addFolder('Position');
                 var cubeX = folder1.add( parameters, 'x' ).min(parameters.negAxis).max(parameters.posAxis).step(1).listen();
-                var cubeY = folder1.add( parameters, 'y' ).min(0).max(100).step(1).listen();
+                var cubeY = folder1.add( parameters, 'y' ).min(-200).max(200).step(1).listen();
                 var cubeZ = folder1.add( parameters, 'z' ).min(parameters.negAxis).max(parameters.posAxis).step(1).listen();
                 folder1.add( parameters, 'resetPosition' ).name("Reset Position");
                 folder1.open();
@@ -443,6 +442,7 @@
 				var intersects = raycaster.intersectObjects( objects );
 				if ( intersects.length > 0 ) {
 					var intersect = intersects[ 0 ];
+                    console.log(intersect);
 					//delete cube
 					if ( isShiftDown ) {
 						if ( intersect.object !== plane ) {
@@ -455,12 +455,11 @@
                             return x !== plane;
                         });
                         collidableMeshList = itemsWithoutPlane.slice();
-
 						var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
 						var points = new THREE.Vector3();
-                        points.set(intersect.point.x,intersect.point.y+scaler,intersect.point.z);
+                        points.set(intersect.point.x,intersect.point.y,intersect.point.z);
                         voxel.position.copy( points ).add( intersect.face.normal );
-						voxel.position.divideScalar( packet_height ).floor().multiplyScalar( packet_height ).addScalar( packet_height/2 );
+						voxel.position.divideScalar( packet_height ).floor().multiplyScalar( packet_height ).addScalar( scaler );
 						// if((voxel.position.x<=225 && voxel.position.x>=-225) &&
 							// (voxel.position.z<=225 && voxel.position.z>=-225)) {
 						// if (scalerObjects.length > 1) {
@@ -472,6 +471,7 @@
                          //        voxel.position.y =  voxel.position.y+scaler;
 						// 	}
 						// }
+                        voxel.position.y =  intersect.point.y+scaler;
 						scene.add(voxel);
 						objects.push(voxel);
 						currentVoxel = voxel;
@@ -486,7 +486,7 @@
 						//     console.log('outside the grid');
 						// }
                         //console.log(intersects);
-                        console.log(currentVoxelPosition);
+
                     }
 					render();
 				}
