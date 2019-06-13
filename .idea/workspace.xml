@@ -20,8 +20,8 @@
       <file leaf-file-name="index.html" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/index.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="189">
-              <caret line="434" column="17" lean-forward="true" selection-start-line="434" selection-start-column="17" selection-end-line="434" selection-end-column="17" />
+            <state relative-caret-position="483">
+              <caret line="439" column="63" selection-start-line="439" selection-start-column="63" selection-end-line="439" selection-end-column="63" />
             </state>
           </provider>
         </entry>
@@ -29,8 +29,8 @@
       <file leaf-file-name="three.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/three.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="205">
-              <caret line="1728" column="8" selection-start-line="1728" selection-start-column="8" selection-end-line="1728" selection-end-column="8" />
+            <state relative-caret-position="193">
+              <caret line="1812" column="8" selection-start-line="1812" selection-start-column="8" selection-end-line="1812" selection-end-column="8" />
             </state>
           </provider>
         </entry>
@@ -53,13 +53,14 @@
       <find>canvaas</find>
       <find>container</find>
       <find>canvas</find>
-      <find>console.log</find>
-      <find>addScalar</find>
       <find>cubeMaterial</find>
       <find>cubeWireMaterial</find>
       <find>webkitRequestAnimationFrame</find>
       <find>GridBoxGeometry</find>
       <find>scaler</find>
+      <find>detectToPlaceCollision</find>
+      <find>console.log</find>
+      <find>addScalar</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -86,7 +87,7 @@
   <component name="NodePackageJsonFileManager">
     <packageJsonPaths />
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
+  <component name="ProjectFrameBounds" extendedState="7">
     <option name="x" value="85" />
     <option name="y" value="25" />
     <option name="width" value="1750" />
@@ -151,16 +152,29 @@
       <workItem from="1558235493576" duration="21122000" />
       <workItem from="1558324538735" duration="18527000" />
       <workItem from="1558408280372" duration="14561000" />
+      <workItem from="1558494961336" duration="8284000" />
+      <workItem from="1558754061646" duration="3797000" />
+      <workItem from="1558763354644" duration="11677000" />
+      <workItem from="1558840745084" duration="7929000" />
+      <workItem from="1558930076268" duration="7330000" />
+      <workItem from="1559014861366" duration="6053000" />
+      <workItem from="1559102557992" duration="592000" />
+      <workItem from="1560058497946" duration="1808000" />
+      <workItem from="1560146068773" duration="1210000" />
+      <workItem from="1560227704274" duration="7045000" />
+      <workItem from="1560312286015" duration="1210000" />
+      <workItem from="1560399314182" duration="12535000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="176429000" />
+    <option name="totallyTimeSpent" value="245899000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-7" y="-7" width="1550" height="838" extended-state="6" />
+    <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.20225464" />
+      <window_info content_ui="combo" id="Project" order="0" weight="0.17572944" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
@@ -186,6 +200,174 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="9039">
+          <caret line="393" column="59" selection-start-line="393" selection-start-column="59" selection-end-line="393" selection-end-column="59" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/three.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="39744">
+          <caret line="1728" column="8" selection-start-line="1728" selection-start-column="8" selection-end-line="1728" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="9039">
+          <caret line="393" column="59" lean-forward="true" selection-start-line="393" selection-start-column="59" selection-end-line="393" selection-end-column="59" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/three.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="39744">
+          <caret line="1728" column="8" selection-start-line="1728" selection-start-column="8" selection-end-line="1728" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="8671">
+          <caret line="377" column="21" selection-start-line="377" selection-start-column="21" selection-end-line="377" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/three.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="39744">
+          <caret line="1728" column="8" selection-start-line="1728" selection-start-column="8" selection-end-line="1728" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="9315">
+          <caret line="405" column="13" lean-forward="true" selection-start-line="405" selection-start-column="13" selection-end-line="405" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/three.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="39744">
+          <caret line="1728" column="8" selection-start-line="1728" selection-start-column="8" selection-end-line="1728" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="9085">
+          <caret line="395" selection-start-line="395" selection-end-line="395" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/three.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="39744">
+          <caret line="1728" column="8" selection-start-line="1728" selection-start-column="8" selection-end-line="1728" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="9085">
+          <caret line="395" lean-forward="true" selection-start-line="395" selection-end-line="395" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/three.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="39744">
+          <caret line="1728" column="8" selection-start-line="1728" selection-start-column="8" selection-end-line="1728" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="8970">
+          <caret line="390" column="21" lean-forward="true" selection-start-line="390" selection-start-column="21" selection-end-line="390" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/three.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="39744">
+          <caret line="1728" column="8" selection-start-line="1728" selection-start-column="8" selection-end-line="1728" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="11385">
+          <caret line="495" column="25" lean-forward="true" selection-start-line="495" selection-start-column="25" selection-end-line="495" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/three.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="39744">
+          <caret line="1728" column="8" selection-start-line="1728" selection-start-column="8" selection-end-line="1728" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="9016">
+          <caret line="392" column="43" lean-forward="true" selection-start-line="392" selection-start-column="43" selection-end-line="392" selection-end-column="43" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/three.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="39744">
+          <caret line="1728" column="8" selection-start-line="1728" selection-start-column="8" selection-end-line="1728" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="8947">
+          <caret line="389" column="70" lean-forward="true" selection-start-line="389" selection-start-column="70" selection-end-line="389" selection-end-column="70" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/three.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="39744">
+          <caret line="1728" column="8" selection-start-line="1728" selection-start-column="8" selection-end-line="1728" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="8947">
+          <caret line="389" column="58" lean-forward="true" selection-start-line="389" selection-start-column="58" selection-end-line="389" selection-end-column="58" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/three.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="39744">
+          <caret line="1728" column="8" selection-start-line="1728" selection-start-column="8" selection-end-line="1728" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="9982">
+          <caret line="434" column="17" lean-forward="true" selection-start-line="434" selection-start-column="17" selection-end-line="434" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/three.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="39744">
+          <caret line="1728" column="8" selection-start-line="1728" selection-start-column="8" selection-end-line="1728" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/index.html">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="10764">
@@ -303,15 +485,15 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/three.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="205">
-          <caret line="1728" column="8" selection-start-line="1728" selection-start-column="8" selection-end-line="1728" selection-end-column="8" />
+        <state relative-caret-position="193">
+          <caret line="1812" column="8" selection-start-line="1812" selection-start-column="8" selection-end-line="1812" selection-end-column="8" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/index.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="189">
-          <caret line="434" column="17" lean-forward="true" selection-start-line="434" selection-start-column="17" selection-end-line="434" selection-end-column="17" />
+        <state relative-caret-position="483">
+          <caret line="439" column="63" selection-start-line="439" selection-start-column="63" selection-end-line="439" selection-end-column="63" />
         </state>
       </provider>
     </entry>

@@ -191,7 +191,7 @@
 				mouse = new THREE.Vector3();
 
 				var geometry = new THREE.BoxBufferGeometry( box_width, box_width /*place available to drop on grid*/ );
-				geometry.rotateX( - Math.PI / 2 );
+				geometry.rotateX( - 90 * Math.PI / 180 );
 				plane = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { visible: false } ) );
 				scene.add( plane );
 				objects.push( plane );
@@ -375,6 +375,10 @@
                 return false;
             }
 
+            function detectToPlaceCollision(voxel) {
+
+            }
+
             function XAxisGridOutSide(axisValue) {
                var axis = (box_width-packet_width)/2;
                if (axisValue > 0 && axisValue > axis) {
@@ -430,8 +434,10 @@
 				var intersects = raycaster.intersectObjects( objects );
 				if ( intersects.length > 0 ) {
 					var intersect = intersects[ 0 ];
+
 					rollOverMesh.position.copy( intersect.point ).add( intersect.face.normal );
-					rollOverMesh.position.divideScalar( packet_height ).floor().multiplyScalar( packet_height ).addScalar( packet_height/2 );
+					rollOverMesh.position.divideScalar( 25 ).floor().multiplyScalar( 25 ).addScalar( packet_height/2 );
+				    console.log(detectCollision(rollOverMesh));
 				}
 				render();
 			}
@@ -440,9 +446,11 @@
 				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
 				raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( objects );
+				var collid_objects = raycaster.intersectObjects( collidableMeshList );
+
 				if ( intersects.length > 0 ) {
 					var intersect = intersects[ 0 ];
-                    console.log(intersect);
+					var cllid_intersect = collid_objects[ 0 ];
 					//delete cube
 					if ( isShiftDown ) {
 						if ( intersect.object !== plane ) {
@@ -455,22 +463,12 @@
                             return x !== plane;
                         });
                         collidableMeshList = itemsWithoutPlane.slice();
+
 						var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
-						var points = new THREE.Vector3();
-                        points.set(intersect.point.x,intersect.point.y,intersect.point.z);
-                        voxel.position.copy( points ).add( intersect.face.normal );
-						voxel.position.divideScalar( packet_height ).floor().multiplyScalar( packet_height ).addScalar( scaler );
-						// if((voxel.position.x<=225 && voxel.position.x>=-225) &&
-							// (voxel.position.z<=225 && voxel.position.z>=-225)) {
-						// if (scalerObjects.length > 1) {
-                         //    var currentScaler = scalerObjects[scalerObjects.length-1];
-                         //    var prevScaler = scalerObjects[scalerObjects.length-2];
-                         //    if (currentScaler>prevScaler &&
-						// 		intersect.object.position.y!==scaler &&
-                         //        intersect.object.position.y>0){
-                         //        voxel.position.y =  voxel.position.y+scaler;
-						// 	}
-						// }
+                        voxel.position.copy( intersect.point ).add( intersect.face.normal );
+						voxel.position.divideScalar( 25 ).floor().multiplyScalar( 25 ).addScalar( packet_height/2 );
+
+                        //detectToPlaceCollision(raycaster);
                         voxel.position.y =  intersect.point.y+scaler;
 						scene.add(voxel);
 						objects.push(voxel);
@@ -480,12 +478,7 @@
 							currentVoxel.position.y,
 							currentVoxel.position.z
 						);
-                            //prevObj = objects[objects.length-1];
-                            //prevVoxY = prevObj.position.y;
-                        // }else{
-						//     console.log('outside the grid');
-						// }
-                        //console.log(intersects);
+
 
                     }
 					render();
