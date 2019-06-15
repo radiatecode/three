@@ -19,36 +19,7 @@
 	<body>
 
 		<div class="container">
-			<!--<h3>Controls</h3>-->
 			<div class="row">
-				<!--<div class="col-md-6">-->
-					<!--<strong>click</strong>: add voxel, <strong>shift + click</strong>: remove voxel-->
-					<!--<form class="form-horizontal">-->
-						<!--<div class="form-group">-->
-							<!--<input type="text" class="form-control" placeholder="height" id="height">-->
-						<!--</div>-->
-						<!--<div class="form-group">-->
-							<!--<input type="text" class="form-control" placeholder="width" id="width">-->
-						<!--</div>-->
-						<!--<div class="form-group">-->
-							<!--<input type="button" class="btn btn-info btn-xs" value="Submit" id="submit">-->
-						<!--</div>-->
-					<!--</form>-->
-				<!--</div>-->
-				<!--<div class="col-md-4 col-md-offset-2">-->
-					<!--<strong>click</strong>: add voxel, <strong>shift + click</strong>: remove voxel-->
-					<!--<form class="form-horizontal">-->
-						<!--<div class="form-group">-->
-							<!--<input type="text" class="form-control" placeholder="Packet Size" id="packet_size">-->
-						<!--</div>-->
-						<!--<div class="form-group">-->
-							<!--<input type="text" class="form-control" placeholder="Move X Axios" id="move_x">-->
-						<!--</div>-->
-						<!--<div class="form-group">-->
-							<!--<input type="button" class="btn btn-info btn-xs" value="Submit" id="packet_submit">-->
-						<!--</div>-->
-					<!--</form>-->
-				<!--</div>-->
 				<div id="container" class="col-md-12">
                    <div id="canvas"></div>
 				</div>
@@ -73,7 +44,7 @@
 			var camera, scene, renderer, cameraControls, container, stats;
 			var plane, packet_height=50, packet_width=50, scaler=25 ,
 				box_height=300, box_width=500;
-			var mouse, raycaster, isShiftDown = false;
+			var mouse, raycaster, isShiftDown = false, isSelectBox = false;
 			var rollOverMesh, rollOverMaterial;
 			var cubeGeo, cubeMaterial;
 			var boundingGrid, boxGeometry3, gridGeometry3, grid3;
@@ -81,31 +52,6 @@
             var rollOverObjectIds = [],scalerObjects = [],objects = [],collidableMeshList=[];
             var currentVoxel=null,currentVoxelPosition = new THREE.Vector3();
             dynamicGUI();
-            // $(function () {
-            //     $("#submit").click(function () {
-            //         box_width = $("#width").val();
-            //         box_height = $("#height").val();
-            //
-            //         if(box_width !== "" && box_height !== ""){
-            //             scaler = packet_height/2;
-            //             init();
-            //             render();
-            //         }else{
-            //             alert('all field are required')
-            //         }
-            //     });
-            //     $("#packet_submit").click(function () {
-            //         packet_height = $("#packet_size").val();
-            //         if(packet_height !== ""){
-            //             scaler = packet_height/2;
-            //             updateRollerCube();
-            //         }else{
-            //             alert('all field are required')
-            //         }
-            //
-            //     });
-            //
-            // });
             function clean(){
                 camera = null;scene = null;
                 rollOverMaterial = null;rollOverMesh = null;
@@ -121,6 +67,22 @@
                     myNode.removeChild(myNode.firstChild);
                 }
 			}
+            function clearObjects() {
+                if ( !confirm( 'Are you sure?' ) ) {
+                    return
+                }
+                var i = 0,object = null;
+                while ( i < scene.objects.length ) {
+                    object = scene.objects[ i ];
+                    if ( object instanceof THREE.Mesh && object !== plane) {
+                        scene.remove( object );
+                        continue;
+                    }
+
+                    i ++;
+                }
+                animate();
+            }
 			function init() {
                 clean();
 			     /*Camera part (1)*/
@@ -145,7 +107,6 @@
 				// cubes BoxBufferGeometry(middle veritcal,height, top horizontal)
 				cubeGeo = new THREE.CubeGeometry( packet_width, packet_height, packet_height );
 				cubeMaterial = new THREE.MeshBasicMaterial( { color: 0xfeb74c, map: new THREE.TextureLoader().load( 'square-outline-textured.png' ) } );
-                scalerObjects.push(scaler);
 				// grid
                 boundingGrid = new THREE.Object3D();
 				var gridHelperYZ = new THREE.GridHelper( 500, 100,new THREE.Color( 'skyblue' ),new THREE.Color( 'skyblue' ) /*make top up  grid*/ );
@@ -205,6 +166,19 @@
 				/*container*/
                 container = document.getElementById('canvas');
                 document.body.appendChild( container );
+                var info = document.createElement( 'div' );
+                info.style.position = 'absolute';
+                info.style.top = '5px';
+                info.style.width = '100%';
+                info.style.textAlign = 'center';
+                info.innerHTML = '<span style="color: #444; background-color: #fff; border-bottom: 1px solid #ddd; padding: 8px 10px; text-transform: uppercase;">' +
+                    '<strong>click</strong>: add voxel, ' +
+                    '<strong>shift + click</strong>: remove voxel, ' +
+                    '<strong>S + Click</strong>: select, ' +
+                    '<strong>drag</strong>: rotate | ' +
+					'<br> <strong style="color: red" id="error"></strong>'+
+                    '</span>';
+                document.body.appendChild(info);
 
 				/*Render part (3)*/
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -231,8 +205,8 @@
 			}
             /*Custom Dynamic Gui*/
 			function dynamicGUI() {
-                // var axes = new THREE.AxesHelper();
-                // scene.add(axes);
+                //var axes = new THREE.AxesHelper();
+                //scene.add(axes);
 
                 gui = new dat.GUI();
                 parameters =
@@ -268,6 +242,9 @@
                            currentVoxel.position.x = currentVoxelPosition.x;
                            currentVoxel.position.y = currentVoxelPosition.y;
                            currentVoxel.position.z = currentVoxelPosition.z;
+                        },
+						clearSceneObjects:function () {
+                            clearObjects();
                         }
                     };
 
@@ -415,7 +392,6 @@
                 rollOverMesh = new THREE.Mesh( rollOverGeo, rollOverMaterial );
                 scene.add( rollOverMesh );
                 rollOverObjectIds.push(rollOverMesh.id);
-                scalerObjects.push(scaler);
 
                 // cubes BoxBufferGeometry(middle veritcal,height, top horizontal)
                 cubeGeo = new THREE.CubeGeometry( packet_width, packet_height, packet_height );
@@ -427,6 +403,7 @@
 				camera.updateProjectionMatrix();
 				renderer.setSize( window.innerWidth, window.innerHeight );
 			}
+
 			function onDocumentMouseMove( event ) {
 				event.preventDefault();
 				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
@@ -437,28 +414,28 @@
 
 					rollOverMesh.position.copy( intersect.point ).add( intersect.face.normal );
 					rollOverMesh.position.divideScalar( 25 ).floor().multiplyScalar( 25 ).addScalar( packet_height/2 );
-				    console.log(detectCollision(rollOverMesh));
 				}
 				render();
 			}
+
 			function onDocumentMouseDown( event ) {
 				event.preventDefault();
 				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
 				raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( objects );
-				var collid_objects = raycaster.intersectObjects( collidableMeshList );
 
 				if ( intersects.length > 0 ) {
 					var intersect = intersects[ 0 ];
-					var cllid_intersect = collid_objects[ 0 ];
 					//delete cube
 					if ( isShiftDown ) {
 						if ( intersect.object !== plane ) {
 							scene.remove( intersect.object );
 							objects.splice( objects.indexOf( intersect.object ), 1 );
 						}
-						//create cube
-					} else {
+					}else if( isSelectBox ){ //select cube
+					    console.log('selected',intersect.object);
+                        currentVoxel = intersect.object;
+					}else { //create cube
                         var itemsWithoutPlane = objects.filter(function(x) {
                             return x !== plane;
                         });
@@ -468,30 +445,37 @@
                         voxel.position.copy( intersect.point ).add( intersect.face.normal );
 						voxel.position.divideScalar( 25 ).floor().multiplyScalar( 25 ).addScalar( packet_height/2 );
 
-                        //detectToPlaceCollision(raycaster);
-                        voxel.position.y =  intersect.point.y+scaler;
-						scene.add(voxel);
-						objects.push(voxel);
-						currentVoxel = voxel;
-						currentVoxelPosition.set(
-							currentVoxel.position.x,
-							currentVoxel.position.y,
-							currentVoxel.position.z
-						);
+						if (XAxisGridOutSide(voxel.position.x) || ZAxisGridOutSide(voxel.position.x)) {
+						    document.getElementById('error').innerHTML = "Outside Of The Container";
+						}else {
+                            document.getElementById('error').innerHTML = "";
+                            voxel.position.y = intersect.point.y + scaler;
+                            scene.add(voxel);
+                            objects.push(voxel);
+                            currentVoxel = voxel;
+                            currentVoxelPosition.set(
+                                currentVoxel.position.x,
+                                currentVoxel.position.y,
+                                currentVoxel.position.z
+                            );
+                        }
 
 
                     }
 					render();
 				}
 			}
+
 			function onDocumentKeyDown( event ) {
 				switch ( event.keyCode ) {
 					case 16: isShiftDown = true; break;
+					case 83: isSelectBox = true; break;
 				}
 			}
 			function onDocumentKeyUp( event ) {
 				switch ( event.keyCode ) {
 					case 16: isShiftDown = false; break;
+					case 83: isSelectBox = false; break;
 				}
 			}
 
